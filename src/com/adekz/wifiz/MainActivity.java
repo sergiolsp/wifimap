@@ -19,7 +19,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -38,7 +42,7 @@ public class MainActivity extends Activity {
     
     boolean pause=false;
 
-    ArrayList<HashMap<String, String>> arraylist = new ArrayList<HashMap<String, String>>();
+    public static ArrayList<HashMap<String, String>> arraylist = new ArrayList<HashMap<String, String>>();
     SimpleAdapter adapter;
 
 	@Override
@@ -63,6 +67,26 @@ public class MainActivity extends Activity {
 		});
 		
         lv = (ListView)findViewById(R.id.list_wifi);
+        
+        lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        lv.setTextFilterEnabled(true);
+
+        lv.setOnItemClickListener(new OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                CheckBox box = (CheckBox) view.findViewById(R.id.checkbox);
+
+                if (box.isChecked()){
+                    box.setChecked(false);
+                    
+                }else{
+                    box.setChecked(true);
+                    
+                };
+                
+                configuraRoteador(position);
+            }
+        });
 
         wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         if (wifi.isWifiEnabled() == false)
@@ -71,6 +95,14 @@ public class MainActivity extends Activity {
             wifi.setWifiEnabled(true);
         }   
 
+	}
+	
+	public void configuraRoteador(int position){
+		if(Map.roteadores!=null && Map.roteadores.containsKey(arraylist.get(position).get("bssid"))){
+			Map.roteadores.remove(arraylist.get(position).get("bssid"));
+		}else{
+			Map.roteadores.put(arraylist.get(position).get("bssid"), position);
+		}
 	}
 	
 	public void showList(){
@@ -86,8 +118,9 @@ public class MainActivity extends Activity {
 	            {   
 	                HashMap<String, String> item = new HashMap<String, String>();                       
 	                item.put("ssid", results.get(size).SSID);
-	                item.put("level", "Level: "+String.valueOf(results.get(size).level));
+	                item.put("level", String.valueOf(results.get(size).level));
 	                item.put("freq", "Freq: "+String.valueOf(results.get(size).frequency));
+	                item.put("bssid", String.valueOf(results.get(size).BSSID));
 	                
 	                Log.v(TAG, "  BSSID       =" + results.get(size).BSSID);
 	                Log.v(TAG, "  SSID        =" + results.get(size).SSID);
@@ -162,9 +195,19 @@ public class MainActivity extends Activity {
 		return true;
 	}
 	
+	public void abreMapa(){
+		 Intent intent = new Intent(this, Map.class);
+		 startActivity(intent);
+	}
+	
 	@Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+        
+        case R.id.map:
+	        
+	    	abreMapa();
+	        return true;
         
         case R.id.sair:
 	        // Fecha a aplicacao
